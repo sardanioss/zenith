@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container" id="main-app">
+        <!-- Loading Screen (overlay) -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-logo">
+                    <div class="logo-icon">Z</div>
+                    <h2 class="logo-text">Zenith</h2>
+                </div>
+                <div class="loading-spinner">
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                </div>
+                <p class="loading-text">Loading your workspace...</p>
+            </div>
+        </div>
+        <!-- Custom title bar -->
+        <div class="title-bar">
+            <div class="title-bar-left">
+                <div class="app-icon"></div>
+                <span class="app-title">Zenith</span>
+            </div>
+            <div class="title-bar-controls">
+                <button class="control-btn minimize">─</button>
+                <button class="control-btn maximize">□</button>
+                <button class="control-btn close">×</button>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="user-profile">
+                    <div class="avatar" data-initial="W"></div>
+                    <input type="text" class="workspace-name" value="My Workspace" placeholder="Workspace name">
+                    <p class="date-today"></p>
+                </div>
+
+                <button class="sidebar-toggle" id="sidebar-toggle">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                
+                <nav class="nav-menu">
+                    <button class="nav-item active" data-view="calendar">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </span>
+                        <span>Calendar</span>
+                    </button>
+                    <button class="nav-item" data-view="tasks">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 11L12 14L22 4"></path>
+                                <path d="M21 12V19A2 2 0 0119 21H5A2 2 0 013 19V5A2 2 0 015 3H16"></path>
+                            </svg>
+                        </span>
+                        <span>All Tasks</span>
+                    </button>
+                    <button class="nav-item" data-view="analytics">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                        </span>
+                        <span>Analytics</span>
+                    </button>
+                </nav>
+
+                <!-- Task Pool for Drag & Drop -->
+                <div class="task-pool">
+                    <div class="task-pool-header">
+                        <h4>Task Pool</h4>
+                        <button class="add-task-btn" id="add-standalone-task">+</button>
+                    </div>
+                    <div class="task-pool-list" id="task-pool">
+                        <!-- Draggable tasks will be added here -->
+                    </div>
+                </div>
+
+                <div class="sidebar-bottom">
+                    <div class="quick-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="tasks-today">0</span>
+                            <span class="stat-label">OPEN</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="completed-today">0</span>
+                            <span class="stat-label">DONE</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main content area -->
+            <main class="content">
+                <!-- Calendar View -->
+                <div id="calendar-view" class="view active">
+                    <div class="view-header">
+                        <h1>Calendar</h1>
+                        <div class="header-actions">
+                            <div class="month-navigator">
+                                <button class="nav-btn" id="prev-month">‹</button>
+                                <h2 id="current-month"></h2>
+                                <button class="nav-btn" id="next-month">›</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="calendar-grid" id="calendar">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Tasks View -->
+                <div id="tasks-view" class="view">
+                    <div class="view-header">
+                        <h1>All Tasks</h1>
+                        <div class="header-actions">
+                            <div class="filter-chips">
+                                <button class="chip active" data-filter="open">Open</button>
+                                <button class="chip" data-filter="completed">Completed</button>
+                                <button class="chip" data-filter="all">All</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tasks-container" id="all-tasks">
+                        <!-- Tasks will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Analytics View -->
+                <div id="analytics-view" class="view">
+                    <div class="view-header">
+                        <h1>Analytics</h1>
+                        <div class="header-actions">
+                            <input type="date" id="report-start" class="form-input" style="width: 150px;">
+                            <span style="color: var(--text-secondary);">to</span>
+                            <input type="date" id="report-end" class="form-input" style="width: 150px;">
+                            <button class="btn-primary" id="generate-report">Generate</button>
+                        </div>
+                    </div>
+
+                    <div class="analytics-grid">
+                        <div class="stat-card">
+                            <h3>Total Tasks</h3>
+                            <div class="stat-number" id="total-tasks">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Completed</h3>
+                            <div class="stat-number success" id="completed-tasks">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Completion Rate</h3>
+                            <div class="stat-number" id="completion-rate">0%</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total Hours</h3>
+                            <div class="stat-number" id="total-hours">0h</div>
+                        </div>
+                    </div>
+
+                    <div class="report-details" id="report-details">
+                        <!-- Detailed report will be shown here -->
+                    </div>
+                </div>
+            </main>
+
+            <!-- Time-based Day View Panel -->
+            <div class="day-view" id="day-view">
+                <div class="day-view-header">
+                    <h2 class="day-view-date" id="day-view-date">Select a date</h2>
+                    <button class="close-day-view" id="close-day-view">×</button>
+                </div>
+                
+                <div class="time-grid" id="time-grid">
+                    <!-- Time slots will be generated here -->
+                </div>
+            </div>
+
+            <!-- Overlay for panels -->
+            <div class="panel-overlay" id="panel-overlay"></div>
+            
+            <!-- Right panel for selected day -->
+            <aside class="right-panel" id="day-panel">
+                <div class="panel-header">
+                    <h2 id="selected-date">Select a date</h2>
+                    <button class="close-panel" id="close-panel">×</button>
+                </div>
+                
+                <div class="panel-content">
+                    <div class="tasks-section">
+                        <div class="section-header">
+                            <h3>Tasks</h3>
+                            <button class="add-btn" id="quick-add-task">+</button>
+                        </div>
+                        <div id="day-tasks" class="tasks-list">
+                            <!-- Tasks will be shown here -->
+                        </div>
+                    </div>
+
+                    <button class="btn-success" id="complete-all">
+                        Mark All Complete
+                    </button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Standalone Task Modal -->
+    <div class="modal" id="standalone-task-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Task</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="standalone-task-title" class="form-input" placeholder="Enter task title">
+                </div>
+                <div class="form-group">
+                    <label>Time (hours)</label>
+                    <select id="standalone-task-time" class="form-input">
+                        <option value="0.5">30 minutes</option>
+                        <option value="1" selected>1 hour</option>
+                        <option value="2">2 hours</option>
+                        <option value="3">3 hours</option>
+                        <option value="4">4 hours</option>
+                        <option value="5">5 hours</option>
+                        <option value="6">6 hours</option>
+                        <option value="8">8 hours</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="standalone-task-description" class="form-input" rows="3" placeholder="Enter task description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <div class="color-picker">
+                        <button class="color-option active" data-color="#5B8DEE" style="background: #5B8DEE"></button>
+                        <button class="color-option" data-color="#9B84EE" style="background: #9B84EE"></button>
+                        <button class="color-option" data-color="#52D0A4" style="background: #52D0A4"></button>
+                        <button class="color-option" data-color="#FFB454" style="background: #FFB454"></button>
+                        <button class="color-option" data-color="#FF6B6B" style="background: #FF6B6B"></button>
+                        <button class="color-option" data-color="#6E6E7A" style="background: #6E6E7A"></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <div class="priority-selector">
+                        <button class="priority-option" data-priority="high">High</button>
+                        <button class="priority-option active" data-priority="medium">Medium</button>
+                        <button class="priority-option" data-priority="low">Low</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancel-standalone-task">Cancel</button>
+                <button class="btn-primary" id="save-standalone-task">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Modal -->
+    <div class="modal" id="event-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Event</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Event Title</label>
+                    <input type="text" id="event-title" class="form-input" placeholder="Enter event title">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="event-date" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="event-description" class="form-input" rows="3" placeholder="Enter description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <div class="color-picker">
+                        <button class="color-option active" data-color="#5B8DEE" style="background: #5B8DEE"></button>
+                        <button class="color-option" data-color="#9B84EE" style="background: #9B84EE"></button>
+                        <button class="color-option" data-color="#52D0A4" style="background: #52D0A4"></button>
+                        <button class="color-option" data-color="#FFB454" style="background: #FFB454"></button>
+                        <button class="color-option" data-color="#FF6B6B" style="background: #FF6B6B"></button>
+                        <button class="color-option" data-color="#6E6E7A" style="background: #6E6E7A"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancel-event">Cancel</button>
+                <button class="btn-primary" id="save-event">Save Event</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div class="modal" id="task-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Task</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="task-title" class="form-input" placeholder="Enter task title">
+                </div>
+                <div class="form-group">
+                    <label>Event (Optional)</label>
+                    <select id="task-event" class="form-input">
+                        <option value="">No event</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="task-description" class="form-input" rows="3" placeholder="Enter task description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Time (hours)</label>
+                    <select id="task-time" class="form-input">
+                        <option value="0.5">30 minutes</option>
+                        <option value="1">1 hour</option>
+                        <option value="2">2 hours</option>
+                        <option value="3">3 hours</option>
+                        <option value="4">4 hours</option>
+                        <option value="5">5 hours</option>
+                        <option value="6">6 hours</option>
+                        <option value="8">8 hours</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="task-category" class="form-input">
+                        <option value="blue">Work</option>
+                        <option value="purple">Personal</option>
+                        <option value="green">Health</option>
+                        <option value="orange">Learning</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <div class="priority-selector">
+                        <button class="priority-option" data-priority="high">High</button>
+                        <button class="priority-option active" data-priority="medium">Medium</button>
+                        <button class="priority-option" data-priority="low">Low</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancel-task">Cancel</button>
+                <button class="btn-primary" id="save-task">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content confirmation-modal">
+            <div class="confirmation-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <h3 id="confirmation-title" class="confirmation-title">Confirm Action</h3>
+            <p id="confirmation-message" class="confirmation-message">Are you sure you want to proceed?</p>
+            <div class="confirmation-buttons">
+                <button id="confirmation-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="confirmation-confirm" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
