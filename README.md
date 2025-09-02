@@ -82,7 +82,7 @@ Simple RESTful API:
 ### Setup
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/simple_planner.git
+git clone https://github.com/sardanioss/zenith.git
 cd simple_planner
 
 # Install dependencies
