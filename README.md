@@ -11,11 +11,11 @@ Zenith is a straightforward task planner that strips away complexity to focus on
 ## Screenshots
 
 ### Calendar View
-![Calendar View](https://raw.githubusercontent.com/sardanioss/images/refs/heads/master/zenith_calendar.png)
+![Calendar View](https://raw.githubusercontent.com/sardanioss/images/refs/heads/master/Screenshot%202025-09-02%20172245.png)
 *Monthly calendar with color-coded tasks and visual progress indicators*
 
 ### All Tasks View
-![All Tasks View](https://raw.githubusercontent.com/sardanioss/images/refs/heads/master/zenith_all_tasks.png)
+![All Tasks View](https://raw.githubusercontent.com/sardanioss/images/refs/heads/master/Screenshot%202025-09-02%20172141.png)
 *Comprehensive task list grouped by dates with priority and time indicators*
 
 ## Features
