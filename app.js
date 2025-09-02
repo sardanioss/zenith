@@ -107,7 +107,80 @@ class PlannerApp {
         }, 500);
     }
 
+    setupCustomTimePicker() {
+        const display = document.getElementById('standalone-deadline-display');
+        const selectors = document.getElementById('standalone-time-selectors');
+        const hourSelect = document.getElementById('standalone-deadline-hour');
+        const minuteSelect = document.getElementById('standalone-deadline-minute');
+        const periodBtns = document.querySelectorAll('.period-btn');
+        const clearBtn = document.getElementById('standalone-clear-time');
+        const hiddenInput = document.getElementById('standalone-task-deadline');
+        
+        // Toggle selectors on display click
+        display.addEventListener('click', () => {
+            const isOpen = selectors.style.display !== 'none';
+            selectors.style.display = isOpen ? 'none' : 'flex';
+        });
+        
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-time-picker')) {
+                selectors.style.display = 'none';
+            }
+        });
+        
+        // Handle period buttons
+        periodBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                periodBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.updateTimeDisplay();
+            });
+        });
+        
+        // Handle select changes
+        [hourSelect, minuteSelect].forEach(select => {
+            select.addEventListener('change', () => this.updateTimeDisplay());
+        });
+        
+        // Clear button
+        clearBtn.addEventListener('click', () => {
+            hourSelect.value = '';
+            minuteSelect.value = '';
+            periodBtns.forEach(b => b.classList.remove('active'));
+            display.querySelector('.time-value').textContent = '--:--';
+            display.querySelector('.time-period').textContent = '--';
+            hiddenInput.value = '';
+            selectors.style.display = 'none';
+        });
+    }
+    
+    updateTimeDisplay() {
+        const hourSelect = document.getElementById('standalone-deadline-hour');
+        const minuteSelect = document.getElementById('standalone-deadline-minute');
+        const activePeriod = document.querySelector('.period-btn.active');
+        const display = document.getElementById('standalone-deadline-display');
+        const hiddenInput = document.getElementById('standalone-task-deadline');
+        
+        if (hourSelect.value && minuteSelect.value && activePeriod) {
+            const hour = hourSelect.value;
+            const minute = minuteSelect.value;
+            const period = activePeriod.dataset.period;
+            
+            display.querySelector('.time-value').textContent = `${hour}:${minute}`;
+            display.querySelector('.time-period').textContent = period;
+            
+            // Convert to 24-hour format for hidden input
+            let hour24 = parseInt(hour);
+            if (period === 'PM' && hour24 !== 12) hour24 += 12;
+            if (period === 'AM' && hour24 === 12) hour24 = 0;
+            
+            hiddenInput.value = `${hour24.toString().padStart(2, '0')}:${minute}`;
+        }
+    }
+    
     setupEventListeners() {
+        this.setupCustomTimePicker();
         // Window controls
         document.querySelector('.minimize').onclick = () => ipcRenderer.send('window-minimize');
         document.querySelector('.maximize').onclick = () => ipcRenderer.send('window-maximize');
@@ -233,8 +306,18 @@ class PlannerApp {
         const time = parseFloat(document.getElementById('standalone-task-time').value);
         const category = document.querySelector('#standalone-task-modal .color-option.active').dataset.color;
         const priority = document.querySelector('#standalone-task-modal .priority-option.active').dataset.priority;
+        const deadlineTime = document.getElementById('standalone-task-deadline').value;
         
         if (!title) return;
+        
+        // If deadline time is provided, combine with task date
+        let deadline = null;
+        if (deadlineTime && this.currentTaskDate) {
+            const [hours, minutes] = deadlineTime.split(':');
+            const deadlineDate = new Date(this.currentTaskDate + 'T00:00:00');
+            deadlineDate.setHours(parseInt(hours), parseInt(minutes));
+            deadline = deadlineDate.toISOString();
+        }
         
         const taskData = {
             title,
@@ -242,7 +325,8 @@ class PlannerApp {
             time_hours: time,
             category,
             priority,
-            date: this.currentTaskDate
+            date: this.currentTaskDate,
+            deadline: deadline
         };
         
         try {
@@ -430,14 +514,26 @@ class PlannerApp {
             // Tasks for this day
             const dayTasks = this.tasks.filter(t => t.date === this.formatDate(date));
             
+            // Check for expired deadlines first
+            const hasExpiredDeadline = dayTasks.some(task => {
+                if (task.deadline && !task.completed) {
+                    const deadline = new Date(task.deadline);
+                    return deadline < new Date();
+                }
+                return false;
+            });
+            
             // Color based on time and task completion
-            if (dayTasks.length > 0) {
+            if (dayTasks.length > 0 || hasExpiredDeadline) {
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
                 const dateCompare = new Date(date);
                 dateCompare.setHours(0, 0, 0, 0);
                 
-                if (dateCompare > now) {
+                // If any task has expired deadline, make the day red
+                if (hasExpiredDeadline) {
+                    dayEl.classList.add('has-incomplete');
+                } else if (dateCompare > now) {
                     // Future date - grey
                     dayEl.classList.add('future-date');
                 } else if (dateCompare.getTime() === now.getTime()) {
@@ -601,20 +697,15 @@ class PlannerApp {
         const container = document.getElementById('day-tasks');
         container.innerHTML = '';
         
-        // Group by category
-        const categories = {
-            blue: { name: 'Work', tasks: [] },
-            purple: { name: 'Personal', tasks: [] },
-            green: { name: 'Health', tasks: [] },
-            orange: { name: 'Learning', tasks: [] }
-        };
+        // Group by category/color
+        const categories = {};
         
         dayTasks.forEach(task => {
-            const category = task.category || 'blue';
-            if (!categories[category]) {
-                categories[category] = { name: category, tasks: [] };
+            const categoryKey = task.category || '#5B8DEE';
+            if (!categories[categoryKey]) {
+                categories[categoryKey] = { tasks: [] };
             }
-            categories[category].tasks.push(task);
+            categories[categoryKey].tasks.push(task);
         });
         
         Object.entries(categories).forEach(([key, category]) => {
@@ -627,7 +718,6 @@ class PlannerApp {
             header.className = 'category-header';
             header.innerHTML = `
                 <span class="category-dot" style="background: ${this.getCategoryColor(key)}"></span>
-                <span class="category-name">${category.name}</span>
                 <span class="category-count">${category.tasks.length}</span>
             `;
             section.appendChild(header);
@@ -638,6 +728,11 @@ class PlannerApp {
                 if (task.completed) taskEl.classList.add('completed');
                 taskEl.dataset.taskId = task.id;
                 
+                const deadlineStr = task.deadline ? new Date(task.deadline).toLocaleTimeString('en-US', {
+                    hour: '2-digit', minute: '2-digit'
+                }) : '';
+                const isExpired = task.deadline && new Date(task.deadline) < new Date() && !task.completed;
+                
                 taskEl.innerHTML = `
                     <div class="task-checkbox ${task.completed ? 'checked' : ''}" data-task-id="${task.id}">
                         ${task.completed ? '✓' : ''}
@@ -645,8 +740,9 @@ class PlannerApp {
                     <div class="task-content">
                         <div class="task-title">${task.title}</div>
                         ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                        ${task.deadline ? `<div class="task-deadline ${isExpired ? 'expired' : ''}">⏰ ${deadlineStr}</div>` : ''}
                         <div class="task-meta">
-                            <span class="task-time">${task.time_hours}h</span>
+                            ${task.time_hours > 0 ? `<span class="task-time">${task.time_hours}h</span>` : ''}
                             <span class="task-priority priority-${task.priority}">${task.priority}</span>
                         </div>
                     </div>
@@ -691,16 +787,17 @@ class PlannerApp {
             if (response.ok) {
                 task.completed = !task.completed;
                 
-                // Update UI
-                const taskEl = document.querySelector(`[data-task-id="${taskId}"]`);
-                if (taskEl) {
-                    taskEl.classList.toggle('completed');
-                    const checkbox = taskEl.querySelector('.task-checkbox');
-                    if (checkbox) {
-                        checkbox.classList.toggle('checked');
-                        checkbox.textContent = task.completed ? '✓' : '';
+                // Update UI - find all elements with this task ID
+                const checkboxes = document.querySelectorAll(`.task-checkbox[data-task-id="${taskId}"]`);
+                checkboxes.forEach(checkbox => {
+                    checkbox.classList.toggle('checked');
+                    checkbox.textContent = task.completed ? '✓' : '';
+                    // Also update parent task card if it exists
+                    const parentCard = checkbox.closest('.task-card');
+                    if (parentCard) {
+                        parentCard.classList.toggle('completed');
                     }
-                }
+                })
                 
                 this.updateDayStats();
                 this.renderCalendar();
@@ -754,6 +851,9 @@ class PlannerApp {
         for (const task of dayTasks) {
             await this.toggleTask(task.id);
         }
+        
+        // Reload the day panel to ensure UI is fully updated
+        this.loadDayTasks(this.selectedDate);
         
         // Update stats after completing all
         this.updateDayStats();
@@ -826,7 +926,6 @@ class PlannerApp {
                     <div class="task-content" data-task-id="${task.id}">
                         <div class="task-header">
                             <span class="task-title">${task.title}</span>
-                            <span class="task-category" style="background: ${this.getCategoryColor(task.category)}">${this.getCategoryName(task.category)}</span>
                         </div>
                         ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
                         <div class="task-meta">

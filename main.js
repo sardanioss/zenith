@@ -5,7 +5,11 @@ const Database = require('./database');
 
 let mainWindow;
 let server;
-const db = new Database();
+// Use userData directory for database in packaged app
+const dbPath = app.isPackaged 
+  ? path.join(app.getPath('userData'), 'planner.db')
+  : path.join(__dirname, 'planner.db');
+const db = new Database(dbPath);
 
 function createWindow() {
   mainWindow = new BrowserWindow({

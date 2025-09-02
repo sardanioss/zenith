@@ -2,8 +2,12 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 class Database {
-  constructor() {
-    const dbPath = path.join(__dirname, 'planner.db');
+  constructor(dbPath = null) {
+    // If no path provided, use default
+    if (!dbPath) {
+      dbPath = path.join(__dirname, 'planner.db');
+    }
+    console.log('Database path:', dbPath);
     this.db = new sqlite3.Database(dbPath);
     this.init();
   }
@@ -22,10 +26,16 @@ class Database {
           priority TEXT DEFAULT 'medium',
           category TEXT DEFAULT 'blue',
           position INTEGER DEFAULT 0,
+          deadline DATETIME,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           completed_at DATETIME
         )
       `);
+      
+      // Add deadline column to existing tables
+      this.db.run(`ALTER TABLE tasks ADD COLUMN deadline DATETIME`, (err) => {
+        // Ignore error if column already exists
+      });
       
       // Drop old events table if it exists
       this.db.run(`DROP TABLE IF EXISTS events`);
@@ -48,10 +58,10 @@ class Database {
 
   createTask(taskData) {
     return new Promise((resolve, reject) => {
-      const { date, title, description, time_hours, priority, category } = taskData;
+      const { date, title, description, time_hours, priority, category, deadline } = taskData;
       this.db.run(
-        'INSERT INTO tasks (date, title, description, time_hours, priority, category) VALUES (?, ?, ?, ?, ?, ?)',
-        [date || null, title, description || '', time_hours || 0, priority || 'medium', category || 'blue'],
+        'INSERT INTO tasks (date, title, description, time_hours, priority, category, deadline) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [date || null, title, description || '', time_hours || 0, priority || 'medium', category || 'blue', deadline || null],
         function(err) {
           if (err) reject(err);
           else {
@@ -105,6 +115,10 @@ class Database {
       if (taskData.date !== undefined) {
         fields.push('date = ?');
         values.push(taskData.date);
+      }
+      if (taskData.deadline !== undefined) {
+        fields.push('deadline = ?');
+        values.push(taskData.deadline);
       }
       
       values.push(id);
