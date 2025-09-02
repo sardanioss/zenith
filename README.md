@@ -8,6 +8,16 @@ A minimalist desktop task management application built with Electron, designed f
 
 Zenith is a straightforward task planner that strips away complexity to focus on what matters - managing your daily tasks. Built with simplicity at its core, it provides a clean calendar interface for organizing tasks without the overhead of complicated project management features.
 
+## Screenshots
+
+### Calendar View
+![Calendar View](https://raw.githubusercontent.com/sardanioss/images/refs/heads/master/zenith_calendar.png)
+*Monthly calendar with color-coded tasks and visual progress indicators*
+
+### All Tasks View
+![All Tasks View](https://raw.githubusercontent.com/sardanioss/images/refs/heads/master/zenith_all_tasks.png)
+*Comprehensive task list grouped by dates with priority and time indicators*
+
 ## Features
 
 ### Core Functionality
@@ -103,6 +113,11 @@ npm start
 ## Usage
 
 ### Adding Tasks
+
+#### Quick Add to Date
+![Add Task to Date](https://raw.githubusercontent.com/sardanioss/images/refs/heads/master/zenith_gif.gif)
+*Click any calendar date to instantly add a task for that day*
+
 1. Click the "+" button in the Tasks Pool for unscheduled tasks
 2. Click any date on the calendar to add a task for that specific day
 3. Fill in task details:
@@ -114,6 +129,11 @@ npm start
    - Priority level (High/Medium/Low)
 
 ### Managing Tasks
+
+#### Drag & Drop Scheduling
+![Drag and Drop](https://github.com/sardanioss/images/blob/master/zenith_gif_2.gif?raw=true)
+*Drag tasks from the pool to any calendar date for instant scheduling*
+
 - **Complete**: Click the checkbox to mark done (turns green)
 - **Mark All Complete**: Click button at bottom of day panel to complete all tasks at once
 - **Edit**: Click on a task to modify its details
