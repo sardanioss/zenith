@@ -101,7 +101,7 @@ Simple RESTful API:
 ```bash
 # Clone the repository
 git clone https://github.com/sardanioss/zenith.git
-cd simple_planner
+cd zenith
 
 # Install dependencies
 npm install
